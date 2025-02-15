@@ -1,6 +1,6 @@
-# GNS3 Server Deployment in AWS Cloud
+# 🚀 Deploying GNS3 Server in AWS with Terraform
 
-This repository provides the necessary configurations and steps to deploy a GNS3 Server in the AWS Cloud, including connectivity with a local/home network and essential network configurations.
+This configuration involves deploying a **GNS3 Server** in **AWS Cloud** along with the necessary infrastructure using **Terraform**. Below are the steps and commands required to set up networking between your local/home network and the GNS3 environment.
 
 ## Prerequisites
 
@@ -8,9 +8,11 @@ This repository provides the necessary configurations and steps to deploy a GNS3
 - Terraform installed
 - Basic networking knowledge
 
-## Installation Steps
+---
 
-### 1. Deploy GNS3 Server with Terraform
+## ⚙️ Installation Steps
+
+### 🌌 Deploy GNS3 Server with Terraform
 
 Terraform is used to automate the deployment of the GNS3 Server instance, SSH key and all the network and infrastructural components.
 
@@ -30,28 +32,33 @@ Terraform is used to automate the deployment of the GNS3 Server instance, SSH ke
    ```
 4. After deployment, note the public and private IPs assigned to your GNS3 Server.
 
-### 2. Configure Network Connectivity
+---
 
-To allow your local/home network to communicate with GNS3 networks, run the following command on your local machine (Windows example):
+### 🌍 Connecting Your Local Network to GNS3 
+
+To establish connectivity between your **local/home network** and the networks in **GNS3**, execute the following commands on the **host OS (Windows)**:
 
 ```bash
+# Add a persistent route to reach the GNS3 networks
 route -p add 192.168.224.0 mask 255.255.255.0 172.16.253.5 metric 256 if 13
+
+# Verify the configured routes
 route print
-route delete -p add 192.168.224.0 mask 255.255.255.0 172.16.253.5 metric 256 if 13 # use this command to remove the route
+
+# Remove the previously added route if necessary
+route delete -p add 192.168.224.0 mask 255.255.255.0 172.16.253.5 metric 256 if 13
 ```
 
-Ensure Windows Defender allows ICMP inbound traffic from GNS3 Server networks.
-
-For Example:
-On the host/windows defender stateful firewall add the inbound rule that allows ICMP traffic to the windows host from remote GNS Server networks: 172.16.253.0/24 and 192.168.224.0/24 , you're going to communicate with form the host or VMs also if your host is used like a hypervisor etc
+Additionally, configure **Windows Defender Firewall** to allow **ICMP traffic** from remote **GNS3 server networks** (`172.16.253.0/24` and `192.168.224.0/24`). This will enable communication between the host, virtual machines (VMs), or other devices using the host as a hypervisor. 
 
 ```powershell
 netsh advfirewall firewall add rule name="Allow ICMP from GNS3 Server" dir=in action=allow protocol=icmpv4 remoteip=172.16.253.0/24, 192.168.224.0/24
 ```
+---
 
-### 3. Configure Cisco Router
+### 🚃 Cisco Router Configuration
 
-Inside GNS3, configure a Cisco router with the following settings:
+Execute the following commands on a **Cisco router** to integrate it with the GNS3 network:
 
 ```bash
 en
@@ -67,19 +74,22 @@ ip route 172.16.253.0 255.255.255.0 192.168.224.254
 do sh ip route
 do wr
 ```
-## The following configurations is not required for the specific operational pattern, it's already hardcoded into the terraform main.tf file
+---
 
-### 1. Set Up GNS3 Server Networking
+## 📡 GNS3 Server Configuration (Manual Setup)
+
+The following configuration is already **hardcoded** in Terraform (`main.tf`) and is **not required** unless performing a **manual setup**:
 
 On the GNS3 Server, create a bridge for network connectivity:
 
 ```bash
-sudo ip link add v-gns-net-0 type bridge    # create a virtual bridge / switch
+# Create a virtual bridge (switch)
+sudo ip link add v-gns-net-0 type bridge 
 sudo ip link set dev v-gns-net-0 up
 sudo ip addr add 192.168.224.254/24 dev v-gns-net-0
 ```
 
-To make these changes persistent, add them to Netplan:
+To make these settings **persistent**, use **Netplan**: 
 
 ```yaml
 /etc/netplan/50-v-gns-bridge.yaml:
@@ -101,14 +111,14 @@ network:
         forward-delay: 0
 ```
 
-Apply the changes:
+Apply the configuration: 
 
 ```bash
 sudo chmod u=rw,g=,o= /etc/netplan/50-v-gns-bridge.yaml
 sudo netplan apply
 ```
 
-Test it on a server:
+### ✅ Test the GNS3 Server Connectivity  
 
 ```bash
 ssh -i MyAWSkey.pem ubuntu@192.168.224.254
@@ -117,104 +127,166 @@ ip route show
 ip link
 ip a 
 ```
+---
 
-### 2. These are merely some useful commands provided for general comprehension
+## 📝 These are merely some useful commands provided for general comprehension
 
-### Debugging and Testing
+### 🔎 Network Debugging and Testing
 
 - Verify connectivity:
   ```bash
-  ping 192.168.224.254
-  traceroute 172.16.253.6
-  sudo tcpdump -i v-gns-net-0 icmp # catching/debugging icmp traffic on GNS Server on v-gns-net-0 device
+  ping 192.168.224.254              # Basic connectivity test
+  traceroute 172.16.253.6           # On Linux
+  tracert 172.16.253.6              # On Windows
+  sudo tcpdump -i v-gns-net-0 icmp  # Capture/debug ICMP traffic on GNS3 server
   ```
 - Check routing tables:
   ```bash
   ip route show
   ```
-- Debug Cisco ICMP traffic:
+- Debug ICMP traffic on Cisco devices:
   ```bash
-  debug ip icmp
+  debug ip icmp 
   ```
-- Show metric on Windows for all interfaces:
+### 🖥 Windows Interface Metrics 
   ```powershell
-  tracert 192.168.224.11
+  # Show metrics for all interfaces
   netsh interface ipv4 show interfaces
-  netsh interface ipv4 set interface "TAP-Windows Adapter V9 #2" metric=5 # set metric value // don't do that , just FYI
-  ```  
 
-### IPTables firewall useful commands
+   # Set metric value (for reference)
+  netsh interface ipv4 set interface "TAP-Windows Adapter V9 #2" metric=5 
+  ```
+  ---
+
+## 🔥 Firewall & IP Forwarding
+
+### Enabling IP Forwarding
 
 ```bash
-sudo sysctl net.ipv4.ip_forward  # check if packet forwading btw interfaces is enabled on the GNS Server, must be = 1 // source/destionation check 
-cat /proc/sys/net/ipv4/ip_forward # repeats the previous command 
-sudo sysctl -w net.ipv4.ip_forward=1  # enable forwarding if the value=0
+# Check if packet forwarding is enabled (should be = 1) // source/destionation check
+sudo sysctl net.ipv4.ip_forward
+cat /proc/sys/net/ipv4/ip_forward # Alternative check
 
-echo "net.ipv4.ip_forward=1" | sudo tee -a /etc/sysctl.conf  # enable IP forwarding to save it permanently
+# Enable forwarding if disabled
+sudo sysctl -w net.ipv4.ip_forward=1
+
+# Persist the setting
+echo "net.ipv4.ip_forward=1" | sudo tee -a /etc/sysctl.conf
 sudo sysctl -p
 
-sudo iptables-save > /etc/iptables/rules.v4 # repeats the previous command
+sudo iptables-save > /etc/iptables/rules.v4 # Alternative way to save rules
 
-# to save rules after reboot, it is recommended to use iptables-save and iptables-restore, or install the iptables-persistent or netfilter-persistent package
+# To save rules after reboot, it is recommended to use iptables-save and iptables-restore, or install the iptables-persistent or netfilter-persistent package
 sudo apt install netfilter-persistent  OR sudo apt install iptables-persistent
-sudo netfilter-persistent save # netfilter-persistent automatically saves and restores rules on reboot
 
-# check iptables rules
-sudo iptables -L
-sudo iptables -L -v -n
-sudo iptables -t nat -L -v -n
-sudo iptables -t nat -L POSTROUTING
+# netfilter-persistent automatically saves and restores rules on reboot
+sudo netfilter-persistent save
+```
+### Managing `iptables` Rules
 
-# it allows server to change the source ip to the dev's interface ip 
+```bash
+sudo iptables -L                         # View iptables rules
+sudo iptables -L -v -n                   # View detailed iptables rules
+sudo iptables -t nat -L -v -n            # View NAT rules
+sudo iptables -t nat -L POSTROUTING      # View NAT rules for POSTROUTING chain
+```
+Example rule for **MASQUERADE** (NAT):
+
+```bash
+# It allows server to change the source ip to the dev's interface ip 
 sudo iptables -t nat -A POSTROUTING -s <ip adress/net adress>/cidr -o dev -j MASQUERADE 
 
-# just an example don't do that:
+# Just an example:
 sudo iptables -t nat -A POSTROUTING -s 172.16.253.0/24 -o some-vr-br0 -j MASQUERADE  # add the rule 
-sudo iptables -t nat -D POSTROUTING -s 172.16.253.0/24 -o some-vr-br0 -j MASQUERADE  # delete the rule
-sudo iptables -t nat -D POSTROUTING 1 # delete the rule by its number
+```
+To delete the rule:
 
-# to allow traffic
+```bash
+sudo iptables -t nat -D POSTROUTING -s 172.16.253.0/24 -o some-vr-br0 -j MASQUERADE  # delete the rule
+sudo iptables -t nat -D POSTROUTING 1                                                # delete by rule number
+```
+### Allowing Traffic and Forwarding
+
+```bash
+# To allow traffic
 sudo iptables -A INPUT -i tun1194 -j ACCEPT
 sudo iptables -A FORWARD -i tun1194 -j ACCEPT
 sudo iptables -A OUTPUT -o tun1194 -j ACCEPT
 
-# allows traffic forwarding btw devices/interfaces
+# Allows traffic forwarding btw devices/interfaces
 sudo iptables -A FORWARD -i tun1194 -o some-vr-br0 -j ACCEPT
 sudo iptables -A FORWARD -i some-vr-br0 -o tun1194 -j ACCEPT
+```
+To **disable** `iptables` temporarily:
 
-# temporary disables iptables firewall
+```bash
+# Temporary disables iptables firewall
 sudo iptables -F
 sudo iptables -t nat -F
+```
 
+---
+
+## 🛠️ `UFW` (Uncomplicated Firewall)
+
+```bash
 sudo ufw status
-sudo ufw status verbose # if ufw is used
-sudo ufw allow from 172.16.253.0/24 to 192.168.224.0/24 # just an example 
+sudo ufw status verbose 
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+sudo ufw allow from 172.16.253.0/24 to 192.168.224.0/24 # Allow traffic between networks 
 sudo ufw disable
 ```
-### Virtual link/Virtual cable and Bridges
+
+---
+
+## 🏗️ Creating Virtual Network Links
+
 ```bash
-# create a virtual link/cable with the veth-gnet interface
+# Create a virtual link (veth pair) with the veth-gnet interface
 sudo ip link add veth-gnet type veth peer name veth-gnet-br
 
-# connect one side to the virtual bridge 
+# Attach one end to the bridge 
 sudo ip link set veth-gnet-br master v-gns-net-0
 
-# assign the ip address to the interface
+# Assign an IP address
 sudo ip addr add 192.168.224.10/24 dev veth-gnet
 sudo ip link set veth-gnet up
 
-# delete the link and its peer / both sides of the link
+# Delete the virtual link // both sides of the link
 sudo ip link del veth-gnet 
 ```
 
-## Cleanup
+---
+
+## 🌞 Cleanup
 
 To destroy the AWS deployment, run:
 ```bash
 terraform destroy -auto-approve
 ```
 
-## License
+---
 
-MIT License
+## 🎯 Summary  
+
+This guide provides a comprehensive setup for deploying and configuring **GNS3 in AWS Cloud** using **Terraform** while ensuring **seamless network integration** with local/home environments. The provided configurations cover:  
+
+- **Networking setup** (routes, firewall rules, and interfaces)  
+- **Cisco router integration**  
+- **GNS3 Server manual configuration**  
+- **Debugging tools and commands**  
+
+💡 **Tip:** The Terraform script already **automates** most of these configurations, so manual Windows setup is only needed for debugging or custom adjustments.  
+
+---
+
+## 📜 License  
+
+This project is licensed under the **MIT License**. Feel free to use and modify as needed.  
+
+---
+
+🚀 **Happy networking!**
+
 
