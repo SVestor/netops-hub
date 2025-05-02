@@ -1,4 +1,7 @@
 from netmiko import ConnectHandler
+import time
+
+start = time.time()
 
 with open('devices_ip.txt') as file:
     devices = file.read().splitlines()
@@ -35,9 +38,11 @@ for ip in devices:
     with open(filename, 'w') as file:
         file.write(output)
         print(f'Backup file of {hostname} created successfully: {filename}')
-        print('#' * 50)
     
     print('\nClosing connection...')
     connection.disconnect()
 
-    print('#' * 50)
+    print('#' * 50 + '\n')
+
+end = time.time()
+print(f"Total execution time: {end - start}")
