@@ -22,7 +22,15 @@ for ip in devices:
     prompt = connection.find_prompt()
     hostname = prompt[:-1]
 
-    filename = f'{hostname}-backup.txt'
+    from datetime import datetime
+    now = datetime.now()
+    year = now.year
+    month = now.month
+    day = now.day
+    hour = now.hour
+    minute = now.minute
+
+    filename = f'{hostname}_{year}-{month}-{day}-{hour}-{minute}_backup.txt'
 
     with open(filename, 'w') as file:
         file.write(output)
