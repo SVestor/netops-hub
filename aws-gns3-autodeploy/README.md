@@ -65,13 +65,25 @@ en
 conf t
 line 0 
 logging synchronous
+exit
+enable secret cisco123
+username admin secret cisco123
 host R1
-int g0/0
+ip domain-name mydomain.local
+crypto key generate rsa modulus 2048
+ip ssh version 2
+line vty 0 4
+transport input ssh
+exec-timeout 20 0
+login local
+exit
+int g0/1
 ip address 192.168.224.11 255.255.255.0
 no shut
 do sh ip int br
 ip route 172.16.253.0 255.255.255.0 192.168.224.254
 do sh ip route
+do show crypto key mypubkey rsa
 do wr
 ```
 ---
