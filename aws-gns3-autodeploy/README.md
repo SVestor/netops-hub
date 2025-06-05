@@ -46,7 +46,7 @@ route -p add 192.168.224.0 mask 255.255.255.0 172.16.253.5 metric 256 if 13
 route print
 
 # Remove the previously added route if necessary
-route delete -p add 192.168.224.0 mask 255.255.255.0 172.16.253.5 metric 256 if 13
+route delete -p 192.168.224.0 mask 255.255.255.0 172.16.253.5 metric 256 if 13
 ```
 
 Additionally, configure **Windows Defender Firewall** to allow **ICMP traffic** from remote **GNS3 server networks** (`172.16.253.0/24` and `192.168.224.0/24`). This will enable communication between the host, virtual machines (VMs), or other devices using the host as a hypervisor. 
